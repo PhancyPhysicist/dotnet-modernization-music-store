@@ -2,19 +2,22 @@
 using System;
 using System.Linq;
 using System.Web.Mvc;
+using System.Collections.Generic;
+using MvcMusicStore.Service;
+using MvcMusicStore.ViewModels;
 
 namespace MvcMusicStore.Controllers
 {
     public class StoreController : Controller
     {
-        MusicStoreEntities storeDB = new MusicStoreEntities();
+        ICatalogService catalogSvc = new HttpCatalogService();
 
         //
         // GET: /Store/
 
         public ActionResult Index()
         {
-            var genres = storeDB.Genres.ToList();
+            var genres = catalogSvc.GetGenres();
 
             return View(genres);
         }
@@ -24,11 +27,18 @@ namespace MvcMusicStore.Controllers
 
         public ActionResult Browse(string genre)
         {
-            // Retrieve Genre and its Associated Albums from database            
-            var genreModel = storeDB.Genres.Include("Albums")
-                .Single(g => g.Name == genre);
+            // Retrieve the genre and its Associated Albums from database.
+            // If the genre is not found, then return an empty list of albums.
+            var genreModel = catalogSvc.GetGenreByName(genre);
+            var albums = catalogSvc.GetAlbumsByGenreName(genre).OrderBy(a => a.Title).ToList();
 
-            return View(genreModel);
+            var viewModel = new StoreBrowseViewModel
+            {
+                Genre = genreModel,
+                Albums = albums
+            };
+
+            return View(viewModel);
         }
 
         //
@@ -36,7 +46,7 @@ namespace MvcMusicStore.Controllers
 
         public ActionResult Details(Guid id)
         {
-            var album = storeDB.Albums.Find(id);
+            var album = catalogSvc.GetAlbumById(id);
 
             return View(album);
         }
@@ -47,10 +57,9 @@ namespace MvcMusicStore.Controllers
         [ChildActionOnly]
         public ActionResult GenreMenu()
         {
-            var genres = storeDB.Genres.ToList();
+            var genres = catalogSvc.GetGenres();
 
             return PartialView(genres);
         }
-
     }
 }

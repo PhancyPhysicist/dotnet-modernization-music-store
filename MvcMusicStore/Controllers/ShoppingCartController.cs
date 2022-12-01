@@ -3,12 +3,14 @@ using MvcMusicStore.ViewModels;
 using System;
 using System.Linq;
 using System.Web.Mvc;
+using MvcMusicStore.Service;
 
 namespace MvcMusicStore.Controllers
 {
     public class ShoppingCartController : Controller
     {
         MusicStoreEntities storeDB = new MusicStoreEntities();
+        ICatalogService catalogSvc = new HttpCatalogService();
 
         //
         // GET: /ShoppingCart/
@@ -35,8 +37,7 @@ namespace MvcMusicStore.Controllers
         {
 
             // Retrieve the album from the database
-            var addedAlbum = storeDB.Albums
-                .Single(album => album.AlbumId == id);
+            var addedAlbum = catalogSvc.GetAlbumById(id);
 
             // Add it to the shopping cart
             var cart = ShoppingCart.GetCart(this.HttpContext);
